@@ -12,12 +12,19 @@ use ethers::{
 
 use futures::SinkExt;
 use gumdrop::Options;
+use mev_inspect::authorization::{Authorization, BasicAuth};
+use mev_inspect::http::Provider as HttpProvider;
 use std::io::Write;
 use std::{collections::HashMap, convert::TryFrom, path::PathBuf, sync::Arc};
+use url::{ParseError, Url};
 
 #[derive(Debug, Options, Clone)]
 struct Opts {
     help: bool,
+    #[options(help = "Provider username")]
+    provider_username: String,
+    #[options(help = "Provider password")]
+    provider_password: String,
 
     #[options(help = "clear and re-build the database")]
     reset: bool,
@@ -84,7 +91,16 @@ async fn main() -> anyhow::Result<()> {
         let provider = CachedProvider::new(Provider::try_from(opts.url.as_str())?, cache);
         run(provider, opts).await
     } else {
-        let provider = Provider::try_from(opts.url.as_str())?;
+        let http_provider = HttpProvider::new_with_auth(
+            Url::parse(opts.url.as_str())?,
+            Authorization::basic(
+                opts.provider_username.as_str(),
+                opts.provider_password.as_str(),
+            ),
+        )?;
+
+        let provider = Provider::new(http_provider);
+
         run(provider, opts).await
     }
 }

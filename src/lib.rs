@@ -9,6 +9,12 @@
 //! - Processor
 //! - Database
 //!     - PostGres (maybe Influx) + Grafana?
+//!
+pub mod authorization;
+
+pub mod http;
+
+pub mod common;
 
 /// MEV Inspectors
 pub mod inspectors;
